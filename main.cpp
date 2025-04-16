@@ -2,7 +2,7 @@
 #include<cstdint>
 
 
-LRESULT CALLBACK WindowProc(HWND nwnd, UINT msg,
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg,
 	WPARAM wparam, LPARAM lparam) {
 	//メッセージに応じてゲーム固有の処理を行う
 	switch (msg)
@@ -15,7 +15,7 @@ LRESULT CALLBACK WindowProc(HWND nwnd, UINT msg,
 	}
 
 	//標準のメッセージ処理を行う
-	return DefWindowProc(nwnd, msg, wparam, lparam);
+	return DefWindowProc(hwnd, msg, wparam, lparam);
 
 }
 
@@ -30,7 +30,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//ウィンドウクラス(なんでも良い)
 	wc.lpszClassName = L"CG2WindowClass";
 	//インスタンスハンドル
-	wc.hInstance = GetDriverModuleHandle(nullptr);
+	wc.hInstance = GetModuleHandle(nullptr);//スペル間違いを
 	//カーソル
 	wc.hCursor = LoadCursor(nullptr,IDC_ARROW);
 
@@ -63,6 +63,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	//ウィンドウを表示する
 	ShowWindow(hwnd, SW_SHOW);
+
+	//ウィンドウのxボタンが押されるまでループ
 
 	MSG msg{};
 	//ウィンドウのxボタンが押されるまでループ
