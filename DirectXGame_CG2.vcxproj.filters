@@ -29,4 +29,7 @@
     <FxCompile Include="Object3d.VS.hlsl" />
     <FxCompile Include="Object3d.PS.hlsl" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="HTMLPage2.html" />
+  </ItemGroup>
 </Project>
