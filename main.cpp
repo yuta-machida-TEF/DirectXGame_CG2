@@ -35,9 +35,7 @@ struct Transform {
 	Vector3 translate;
 };
 
-//Transform変数を作る。
 Transform transform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
-Transform cameraTransform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-15.0f} };
 
 // 単位行列
 Matrix4x4 MakeIdentity4x4() {
@@ -348,7 +346,7 @@ IDxcBlob* CompileShader(
 		 L"-T",profile,//ShaderProfileの設定
 		 L"-Zi",L"-Qembed_debug",//デバック用の情報を埋め込む
 		 L"-Od",//最適化を外しておく
-		 L"Zpr",//メモリレイアウトは行優先
+		 L"-Zpr",//メモリレイアウトは行優先
 	};
 	//実際にShaderをコンパイルする
 	IDxcResult* shaderResult = nullptr;
@@ -767,12 +765,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	scissorRect.top = 0;
 	scissorRect.bottom = kClientHeight;
 
-	Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
-	Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
-	Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
-	Matrix4x4 viewMatrix = Inverse(cameraMatrix);
-	Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
-	*wvpData = worldViewProjectionMatrix;
+	//Transform変数を作る。
+	Transform cameraTransform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-15.0f} };
 
 	//ウィンドウのxボタンが押されるまでループ
 
@@ -789,6 +783,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			/*ゲーム処理.
 			Log(std::format("enemyHP:{},textruePath:{}\n", enemyHp, text))*/
 		}
+
+		Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
+		Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
+		Matrix4x4 viewMatrix = Inverse(cameraMatrix);
+		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
+		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+		*wvpData = worldViewProjectionMatrix;
 
 		//これから書き込むバックバッファのインデックスを取得
 		UINT backBuffetIndex = swapChain->GetCurrentBackBufferIndex();
@@ -827,8 +828,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());//これをいれないと描画ができない
 
 		transform.rotate.y += 0.03f;
-		Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
-		*wvpData = worldMatrix;
 
 		//描画!(DrawCall/ドローコール)。3頂点で1つのインタランス。インタランスについては今後
 		commandList->DrawInstanced(3, 1, 0, 0);
@@ -897,6 +896,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	pixelShaderBlob->Release();
 	vertexShaderBlob->Release();
 	materialResource->Release();
+	wvpResource->Release();
 
 #ifdef _DEBUG
 	debugController->Release();
