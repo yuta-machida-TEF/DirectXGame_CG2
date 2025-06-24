@@ -823,13 +823,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			DispatchMessage(&msg);
 		} else
 		{
-			ImGui_ImplDX12_NewFrame();
-			ImGui_ImplDX12_NewFrame();
-			ImGui::NewFrame();
 
 			/*ゲーム処理.
 			Log(std::format("enemyHP:{},textruePath:{}\n", enemyHp, text))*/
 		}
+
+		ImGui_ImplDX12_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
 
 		Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
 		Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
@@ -869,8 +870,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		commandList->ClearRenderTargetView(rtvHandles[backBuffetIndex], clearColor, 0, nullptr);
 		
 		//描画用のDescriptorHeapの設定
-		/*ID3D12DescriptorHeap* descriptorHeaps[] = { srvDescriptorHeap };
-		commandList->SetDescriptorHeaps(1, descriptorHeaps);*/
+		ID3D12DescriptorHeap* descriptorHeaps[] = { srvDescriptorHeap };
+		commandList->SetDescriptorHeaps(1, descriptorHeaps);
 
 		commandList->RSSetViewports(1, &viewport);//Viewportを設定
 		commandList->RSSetScissorRects(1, &scissorRect);//Scirssorを設定
@@ -890,7 +891,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		commandList->DrawInstanced(3, 1, 0, 0);
 
 		//実際のcommandListのImGuiの描画コマンドを積む
-		//ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
+		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 
 		//画面に描く処理はすべて終わり、画面に映すので、状態を遷移
 		//今回はRenderTargetからPresentにする
@@ -960,9 +961,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	
 	////ImGuiの終了処理。詳細はさして重要ではないので解説は省略する
 	////こういうもんである。初期化と逆順に行う
-	//ImGui_ImplDX12_Shutdown();
-	//ImGui_ImplWin32_Shutdown();
-	//ImGui::DestroyContext();
+	ImGui_ImplDX12_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
 
 #ifdef _DEBUG
 	debugController->Release();
