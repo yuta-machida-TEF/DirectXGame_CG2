@@ -79,56 +79,56 @@ Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2) {
 	return result;
 }
 
-// X軸で回転
-Matrix4x4 MakeRotateXMatrix(float radian) {
-	float cosTheta = std::cos(radian);
-	float sinTheta = std::sin(radian);
-	return { 1.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, cosTheta, sinTheta, 0.0f,
-			0.0f, -sinTheta, cosTheta, 0.0f,
-			0.0f, 0.0f, 0.0f, 1.0f };
-}
-
-// Y軸で回転
-Matrix4x4 MakeRotateYMatrix(float radian) {
-	float cosTheta = std::cos(radian);
-	float sinTheta = std::sin(radian);
-	return { cosTheta, 0.0f, -sinTheta, 0.0f,
-			0.0f, 1.0f, 0.0f, 0.0f,
-			sinTheta, 0.0f, cosTheta, 0.0f,
-			0.0f, 0.0f, 0.0f, 1.0f };
-}
-
-// Z軸で回転
-Matrix4x4 MakeRotateZMatrix(float radian) {
-	float cosTheta = std::cos(radian);
-	float sinTheta = std::sin(radian);
-	return { cosTheta, sinTheta, 0.0f, 0.0f,
-			-sinTheta, cosTheta, 0.0f , 0.0f,
-			0.0f, 0.0f, 1.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 1.0f };
-}
-
-// Affine変換
-Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& translate) {
-	Matrix4x4 result = Multiply(Multiply(MakeRotateXMatrix(rotate.x), MakeRotateYMatrix(rotate.y)), MakeRotateZMatrix(rotate.z));
-	result.m[0][0] *= scale.x;
-	result.m[0][1] *= scale.x;
-	result.m[0][2] *= scale.x;
-
-	result.m[1][0] *= scale.y;
-	result.m[1][1] *= scale.y;
-	result.m[1][2] *= scale.y;
-
-	result.m[2][0] *= scale.z;
-	result.m[2][1] *= scale.z;
-	result.m[2][2] *= scale.z;
-
-	result.m[3][0] = translate.x;
-	result.m[3][1] = translate.y;
-	result.m[3][2] = translate.z;
-	return result;
-}
+//// X軸で回転
+//Matrix4x4 MakeRotateXMatrix(float radian) {
+//	float cosTheta = std::cos(radian);
+//	float sinTheta = std::sin(radian);
+//	return { 1.0f, 0.0f, 0.0f, 0.0f,
+//			0.0f, cosTheta, sinTheta, 0.0f,
+//			0.0f, -sinTheta, cosTheta, 0.0f,
+//			0.0f, 0.0f, 0.0f, 1.0f };
+//}
+//
+//// Y軸で回転
+//Matrix4x4 MakeRotateYMatrix(float radian) {
+//	float cosTheta = std::cos(radian);
+//	float sinTheta = std::sin(radian);
+//	return { cosTheta, 0.0f, -sinTheta, 0.0f,
+//			0.0f, 1.0f, 0.0f, 0.0f,
+//			sinTheta, 0.0f, cosTheta, 0.0f,
+//			0.0f, 0.0f, 0.0f, 1.0f };
+//}
+//
+//// Z軸で回転
+//Matrix4x4 MakeRotateZMatrix(float radian) {
+//	float cosTheta = std::cos(radian);
+//	float sinTheta = std::sin(radian);
+//	return { cosTheta, sinTheta, 0.0f, 0.0f,
+//			-sinTheta, cosTheta, 0.0f , 0.0f,
+//			0.0f, 0.0f, 1.0f, 0.0f,
+//			0.0f, 0.0f, 0.0f, 1.0f };
+//}
+//
+//// Affine変換
+//Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& translate) {
+//	Matrix4x4 result = Multiply(Multiply(MakeRotateXMatrix(rotate.x), MakeRotateYMatrix(rotate.y)), MakeRotateZMatrix(rotate.z));
+//	result.m[0][0] *= scale.x;
+//	result.m[0][1] *= scale.x;
+//	result.m[0][2] *= scale.x;
+//
+//	result.m[1][0] *= scale.y;
+//	result.m[1][1] *= scale.y;
+//	result.m[1][2] *= scale.y;
+//
+//	result.m[2][0] *= scale.z;
+//	result.m[2][1] *= scale.z;
+//	result.m[2][2] *= scale.z;
+//
+//	result.m[3][0] = translate.x;
+//	result.m[3][1] = translate.y;
+//	result.m[3][2] = translate.z;
+//	return result;
+//}
 
 Matrix4x4  MakePerspectiveFovMatrix(float fovY, float aspectRatio, float nearClip, float farClip)
 {
@@ -832,15 +832,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
-		Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
-		Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
-		Matrix4x4 viewMatrix = Inverse(cameraMatrix);
+		ImGui::Begin("Settings");
+		ImGui::ColorEdit4("material", &materialData->x, ImGuiColorEditFlags_AlphaPreview);
+		ImGui::End();
+
+		//Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
+		//Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
+		//Matrix4x4 viewMatrix = Inverse(cameraMatrix);
 		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
-		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
-		*wvpData = worldViewProjectionMatrix;
+		//Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+		//*wvpData = worldViewProjectionMatrix;
 
 		//開発用UIの処理。実際に開発用のUIを出す場合はここをゲーム固有の処理に置き換える
-		ImGui::ShowDemoWindow();
+		//ImGui::ShowDemoWindow();
 
 		//ImGuiの内部コマンドを生成する
 		ImGui::Render();
@@ -961,9 +965,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	
 	////ImGuiの終了処理。詳細はさして重要ではないので解説は省略する
 	////こういうもんである。初期化と逆順に行う
-	ImGui_ImplDX12_Shutdown();
+	/*ImGui_ImplDX12_Shutdown();
 	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
+	ImGui::DestroyContext();*/
 
 #ifdef _DEBUG
 	debugController->Release();
