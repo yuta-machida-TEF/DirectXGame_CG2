@@ -476,7 +476,7 @@ void UploadTextureData(ID3D12Resource* texture, const DirectX::ScratchImage& mip
 	{
 		//MipMapLevelを指定して各Imageを取得
 		const DirectX::Image* img = mipImages.GetImage(mipLevel, 0, 0);
-		//Textureに転送
+        //Textureに転送
 		HRESULT hr = texture->WriteToSubresource(
 			UINT(mipLevel),
 			nullptr,//全領域へコピー
@@ -493,7 +493,7 @@ void UploadTextureData(ID3D12Resource* texture, const DirectX::ScratchImage& mip
 //WIndowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
-	//CoInitializeEx(0, COINIT_MULTITHREADED);
+	CoInitializeEx(0, COINIT_MULTITHREADED);
 	WNDCLASS wc{};
 	//ウィンドウブロシージャ
 	wc.lpfnWndProc = WindowProc;
@@ -1019,7 +1019,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 
-
+	
 
 
 	CloseHandle(fenceEvent);
@@ -1068,7 +1068,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		debug->ReportLiveObjects(DXGI_DEBUG_D3D12, DXGI_DEBUG_RLO_ALL);
 		debug->Release();
 	}
-
+	
 	CoUninitialize();
 
 	return 0;
