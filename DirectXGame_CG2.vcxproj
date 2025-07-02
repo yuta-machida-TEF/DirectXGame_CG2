@@ -121,6 +121,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Object3d.hlsli" />
     <None Include="HTMLPage2.html" />
   </ItemGroup>
   <ItemGroup>

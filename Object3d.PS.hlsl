@@ -1,3 +1,4 @@
+
 struct Material
 {
     float32_t4 color;

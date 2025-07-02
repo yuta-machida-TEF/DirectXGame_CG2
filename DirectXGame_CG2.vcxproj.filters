@@ -58,6 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="HTMLPage2.html" />
+    <None Include="Object3d.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="externals\imgui\imconfig.h">
