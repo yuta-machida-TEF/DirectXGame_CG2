@@ -1123,7 +1123,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 viewMatrixSprite = MakeIdentity4x4();
 		Matrix4x4 projectionMatrixSprite = MakeOrthographicMatrix(0.0f, 0.0f, float(kClientWidth), float(kClientHeight), 0.0f, 100.0f);
 		Matrix4x4 worldViewProjectionMatrixSprite = Multiply(worldMatrixSprite, Multiply(viewMatrixSprite, projectionMatrixSprite));
-		*transformationMatrixDataSPrite = worldMatrixSprite;
+		*transformationMatrixDataSPrite = worldViewProjectionMatrix;
 
 
 		//開発用UIの処理。実際に開発用のUIを出す場合はここをゲーム固有の処理に置き換える
@@ -1257,12 +1257,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	pixelShaderBlob->Release();
 	vertexShaderBlob->Release();
 	materialResource->Release();
-	wvpResource->Release();
-	textureResource->Release();
 
 	transformtionMatrixResourceSprite->Release();
 	vertexResourceSprite->Release();
 
+	wvpResource->Release();
+	textureResource->Release();
 	depthStencilResource->Release();
 	dsvDescriptorHeap->Release();
 	srvDescriptorHeap->Release();
