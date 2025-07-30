@@ -1376,6 +1376,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//TransitionBarrierを振る
 		commandList->ResourceBarrier(1, &barrier);
 
+
 		//コマンドリストの内容を確定させる。すべてのコマンドをつんでからCloseすること
 		hr = commandList->Close();
 		assert(SUCCEEDED(hr));
