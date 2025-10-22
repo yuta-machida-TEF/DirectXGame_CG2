@@ -911,13 +911,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		CreateBufferResource(device, sizeof(TransformationMatrix) * kNumInstance);
 	//書き込みためのアドレスを取得
 	TransformationMatrix* instancingData = nullptr;
-	instancingResource->Map(0, nullptr, reinterpret_cast<void**>(instancingData));
+	instancingResource->Map(0, nullptr, reinterpret_cast<void**>(&instancingData));
 	//単位行列を書き込んでおく
-	/*for (uint32_t index = 0; index < kNumInstance; index++)
+	for (uint32_t index = 0; index < kNumInstance; index++)
 	{
 		instancingData[index].WVP = MakeIdentity4x4();
 		instancingData[index].World = MakeIdentity4x4();
-	}*/
+	}
 
 
 	//RTVの設定
@@ -1477,31 +1477,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		commandList->SetPipelineState(graphicsPipelineState);//PSOを設定
 		commandList->IASetVertexBuffers(0, 1, &vertexBufferView);//VBVを設定
 		//形状を設定。PSOに設定しているものとはまた別。同じものを設定すると考えておけば良い
-		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		//commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		//マテリアルCBufferの場所を設定
 		commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 		//commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());//これをいれないと描画ができない
 		commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
 
-		//他の設定諸々
-		//instancing用のDataを読むためにStructureBufferのSRVを設定する
-		commandList->SetGraphicsRootDescriptorTable(1, instancingSrvHandleGPU);
-		//他の設定諸々
-		//描画!6頂点の板ポリゴンを、kNumInstance(今回は10)だけInstanceを描画を行う
-		commandList->DrawInstanced(UINT(modelData.vertices.size()), kNumInstance, 0, 0);
-
 		//transform.rotate.y += 0.03f;
-		
 
-		//描画!(DrawCall/ドローコール)。3頂点で1つのインタランス。インタランスについては今後
-		commandList->DrawInstanced(UINT(modelData.vertices.size()),1, 0, 0);
-
-		//Spriteの描画。変更が必要なものだけ変更する
-		commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);//VBVを設定
-		//TransformationMatrixCBufferの場所を設定
-		commandList->SetGraphicsRootConstantBufferView(1, transformtionMatrixResourceSprite->GetGPUVirtualAddress());
-		//インデックスを指定
-		commandList->IASetIndexBuffer(&indexBufferViewSprite);//IBVを設定
+		////Spriteの描画。変更が必要なものだけ変更する
+		//commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);//VBVを設定
+		////TransformationMatrixCBufferの場所を設定
+		//commandList->SetGraphicsRootConstantBufferView(1, transformtionMatrixResourceSprite->GetGPUVirtualAddress());
+		////インデックスを指定
+		//commandList->IASetIndexBuffer(&indexBufferViewSprite);//IBVを設定
 		//描画! (DrawCall/ドローコール)
 		//commandList->DrawInstanced(6, 1, 0, 0);
 		//描画! (DrawCall/ドローコール)6個のインデックスを使用し1つのインタランスを描画。その他は当面で良い
@@ -1523,7 +1512,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		commandList->SetComputeRootDescriptorTable(1, instancingSrvHandleGPU);
 		//他の設定諸々
 		//描画! 6頂点の板ポリゴンを,kNumInstance(今回は10)だけInstance描画を行う
-		commandList->DrawInstanced(UINT(modelData.vertices.size()), kNumInstance, 0, 0);
+		//commandList->DrawInstanced(UINT(modelData.vertices.size()), kNumInstance, 0, 0);
 
 		//コマンドリストの内容を確定させる。すべてのコマンドをつんでからCloseすること
 		hr = commandList->Close();
