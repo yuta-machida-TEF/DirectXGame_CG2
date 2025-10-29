@@ -1494,6 +1494,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		//transform.rotate.y += 0.03f;
 
+
 		////Spriteの描画。変更が必要なものだけ変更する
 		//commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);//VBVを設定
 		////TransformationMatrixCBufferの場所を設定
