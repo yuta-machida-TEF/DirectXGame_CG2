@@ -944,8 +944,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	const uint32_t kNumSphereVertices = kSubdivision * kSubdivision * 6;
 	float pi = std::numbers::pi_v<float>;
 
-	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * kNumSphereVertices);
-
 	//マテリアル用のリソースを作る。今回はcolor1つ分のサイズを用意する
 	ID3D12Resource* materialResource = CreateBufferResource(device, sizeof(Vector4));
 	//マテリアルにデータを書き込む
@@ -954,6 +952,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
 	//今回は赤を書き込んでみる
 	*materialData = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+
+	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * kNumSphereVertices);
 
 	//頂点バッファビューを作成する
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
@@ -964,7 +964,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//1頂点あたりのサイズ
 	vertexBufferView.StrideInBytes = sizeof(VertexData);
 
-	
+	//頂点リソースにデータを書き込む
+	VertexData* vertexData = nullptr;
+	//書き込むためのアドレスを取得
+	vertexResource->Map(0, nullptr,
+		reinterpret_cast<void**>(&vertexData));
+
 
 	//経度分割1つ分の角度
 	const float kLonEvery = pi * 2.0f / float(kSubdivision);
@@ -981,11 +986,36 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			uint32_t startIndex = (latIndex * kSubdivision + lonIndex) * 6;
 			float lon = lonIndex * kLonEvery;
 
-			VertexData[startIndex].position.x = std::cos(lat) * std::cos(lon);
-			VertexData[startIndex].position.y = std::sin(lat);
+			vertexData[startIndex].position.x = std::cos(lat) * std::cos(lon);
+			vertexData[startIndex].position.y = std::sin(lat);
 			vertexData[startIndex].position.z = std::cos(lat) * std::sin(lon);
 			vertexData[startIndex].position.w = 1.0f;
-			vertexData[startIndex].texcoord = { float(lonIndex) / float(kSubdivision),1.0f - float(latIndex) / float(kSubdivision) };
+			vertexData[startIndex].texcoord = { float(lonIndex) / float(kSubdivision),
+		    1.0f - float(latIndex) / float(kSubdivision) };
+
+			vertexData[startIndex + 1].position.x = std::cos(lat + kLatEvery) * std::cos(lon);
+			vertexData[startIndex + 1].position.y = std::sin(lat + kLatEvery);
+			vertexData[startIndex + 1].position.z = std::cos(lat + kLatEvery) * std::sin(lon);
+			vertexData[startIndex + 1].position.w = 1.0f;
+			vertexData[startIndex + 1].texcoord = { float(lonIndex) / float(kSubdivision),1.0f - float(latIndex + 1) /
+			float(kSubdivision) };
+
+			vertexData[startIndex + 2].position.x = std::cos(lat + kLatEvery) * std::cos(lon);
+			vertexData[startIndex + 2].position.y = std::sin(lat + kLatEvery);
+			vertexData[startIndex + 2].position.z = std::cos(lat + kLatEvery) * std::sin(lon);
+			vertexData[startIndex + 2].position.w = 1.0f;
+			vertexData[startIndex + 2].texcoord = { float(lonIndex) / float(kSubdivision),1.0f - float(latIndex + 1) /
+			float(kSubdivision) };
+
+			vertexData[startIndex + 3] = vertexData[startIndex + 2];
+			vertexData[startIndex + 4] = vertexData[startIndex + 1];
+
+			vertexData[startIndex + 5].position.x = std::cos(lat + kLatEvery) * std::cos(lon);
+			vertexData[startIndex + 5].position.y = std::sin(lat + kLatEvery);
+			vertexData[startIndex + 5].position.z = std::cos(lat + kLatEvery) * std::sin(lon);
+			vertexData[startIndex + 5].position.w = 1.0f;
+			vertexData[startIndex + 5].texcoord = { float(lonIndex) / float(kSubdivision),1.0f - float(latIndex + 1) /
+			float(kSubdivision) };
 
 		}
 	}
@@ -1194,14 +1224,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		transform.rotate.y += 0.03f;
 
 		//描画!(DrawCall/ドローコール)。3頂点で1つのインタランス。インタランスについては今後
-		commandList->DrawInstanced(6, 1, 0, 0);
+		commandList->DrawInstanced(kNumSphereVertices, 1, 0, 0);
 
 		//Spriteの描画。変更が必要なものだけ変更する
 		commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);//VBVを設定
 		//TransformationMatrixCBufferの場所を設定
 		commandList->SetGraphicsRootConstantBufferView(1, transformtionMatrixResourceSprite->GetGPUVirtualAddress());
 		//描画! (DrawCall/ドローコール)
-		commandList->DrawInstanced(6, 1, 0, 0);
+		commandList->DrawInstanced(kNumSphereVertices, 1, 0, 0);
 
 		//実際のcommandListのImGuiの描画コマンドを積む
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
