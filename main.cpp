@@ -16,7 +16,9 @@
 #include "externals/imgui/imgui.h"
 #include "externals/imgui/imgui_impl_dx12.h"
 #include "externals/imgui/imgui_impl_win32.h"
+#include<numbers>
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 
 
 struct Vector4
@@ -300,6 +302,7 @@ std::string ConverString(const std::wstring& str)
 //Resource作成
 ID3D12Resource* CreateBufferResource(ID3D12Device* device, size_t sizeInBytes)
 {
+
 	//頂点バッファビューを作成する
 	D3D12_HEAP_PROPERTIES uploadHeapProperties{};
 	uploadHeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;//UploadHeapを使う
@@ -936,7 +939,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		IID_PPV_ARGS(&graphicsPipelineState));
 	assert(SUCCEEDED(hr));
 
-	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * 6);
+	//球表示用
+	const uint32_t kSubdivision = 12;
+	const uint32_t kNumSphereVertices = kSubdivision * kSubdivision * 6;
+	float pi = std::numbers::pi_v<float>;
+
+	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * kNumSphereVertices);
 
 	//マテリアル用のリソースを作る。今回はcolor1つ分のサイズを用意する
 	ID3D12Resource* materialResource = CreateBufferResource(device, sizeof(Vector4));
@@ -952,34 +960,35 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//リソースの先頭のアドレスから使う
 	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
 	//使用するリソースのサイズは頂点3つ分のサイズ
-	vertexBufferView.SizeInBytes = sizeof(VertexData) * 6;
+	vertexBufferView.SizeInBytes = sizeof(VertexData) * kNumSphereVertices;
 	//1頂点あたりのサイズ
 	vertexBufferView.StrideInBytes = sizeof(VertexData);
 
-	//頂点リソースにデータを書き込む
-	VertexData* vertexData = nullptr;
-	//書き込むためのアドレスを取得
-	vertexResource->Map(0, nullptr,
-		reinterpret_cast<void**>(&vertexData));
-	//左下
-	vertexData[0].position = { -0.5f,-0.5f ,0.0f ,1.0f };
-	vertexData[0].texcoord = { 0.0f,1.0f };
-	//上
-	vertexData[1].position = { 0.0f,0.5f ,0.0f ,1.0f };
-	vertexData[1].texcoord = { 0.5f,0.0f };
-	//右下
-	vertexData[2].position = { 0.5f,-0.5f ,0.0f ,1.0f };
-	vertexData[2].texcoord = { 1.0f,1.0f };
+	
 
-	//左下2
-	vertexData[3].position = { -0.5f,-0.5f ,0.5f ,1.0f };
-	vertexData[3].texcoord = { 0.0f,1.0f };
-	//上2
-	vertexData[4].position = { 0.0f,0.0f ,0.0f ,1.0f };
-	vertexData[4].texcoord = { 0.5f,0.0f };
-	//右下2
-	vertexData[5].position = { 0.5f,-0.5f ,-0.5f ,1.0f };
-	vertexData[5].texcoord = { 1.0f,1.0f };
+	//経度分割1つ分の角度
+	const float kLonEvery = pi * 2.0f / float(kSubdivision);
+	//緯度の方向に分割
+	const float kLatEvery = pi / float(kSubdivision);
+
+	//緯度の方向に分割
+	for (uint32_t latIndex = 0; latIndex < kSubdivision; latIndex++)
+	{
+		float lat = -pi / 2.0f + kLatEvery * latIndex;
+		//緯度の方向に分割しながら線を描く
+		for (uint32_t lonIndex = 0; lonIndex < kSubdivision; lonIndex++)
+		{
+			uint32_t startIndex = (latIndex * kSubdivision + lonIndex) * 6;
+			float lon = lonIndex * kLonEvery;
+
+			VertexData[startIndex].position.x = std::cos(lat) * std::cos(lon);
+			VertexData[startIndex].position.y = std::sin(lat);
+			vertexData[startIndex].position.z = std::cos(lat) * std::sin(lon);
+			vertexData[startIndex].position.w = 1.0f;
+			vertexData[startIndex].texcoord = { float(lonIndex) / float(kSubdivision),1.0f - float(latIndex) / float(kSubdivision) };
+
+		}
+	}
 
 	//ビューボート
 	D3D12_VIEWPORT viewport{};
@@ -1001,6 +1010,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	//Transform変数を作る。
 	Transform cameraTransform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-5.0f} };
+
 
 	//ImGuiの初期化。詳細はさして重要ではないので解説は省略する。
 	//こういうもんである
