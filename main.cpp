@@ -907,7 +907,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	const uint32_t kNumInstance = 10;//インスタンス数
 	//Instanceing用のTransformationMatrixリソースを作る
-	Microsoft::WRL::ComPtr<ID3D12Resource> instancingResource =
+	ID3D12Resource* instancingResource =
 		CreateBufferResource(device, sizeof(TransformationMatrix) * kNumInstance);
 	//書き込みためのアドレスを取得
 	TransformationMatrix* instancingData = nullptr;
@@ -1110,7 +1110,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	instancingSrvDesc.Buffer.StructureByteStride = sizeof(TransformationMatrix);
 	D3D12_CPU_DESCRIPTOR_HANDLE instancingSrvHandleCPU = GetCPUDesciptorHandle(srvDescriptorHeap,desriptorSizeSRV, 3);
 	D3D12_GPU_DESCRIPTOR_HANDLE instancingSrvHandleGPU = GetGPUDesciptorHandle(srvDescriptorHeap,desriptorSizeSRV, 3);
-	device->CreateShaderResourceView(instancingResource.Get(), &instancingSrvDesc, instancingSrvHandleCPU);
+	device->CreateShaderResourceView(instancingResource, &instancingSrvDesc, instancingSrvHandleCPU);
 
 	
 
