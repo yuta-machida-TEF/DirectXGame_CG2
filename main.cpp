@@ -1000,9 +1000,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			vertexData[startIndex + 1].texcoord = { float(lonIndex) / float(kSubdivision),1.0f - float(latIndex + 1) /
 			float(kSubdivision) };
 
-			vertexData[startIndex + 2].position.x = std::cos(lat + kLatEvery) * std::cos(lon);
-			vertexData[startIndex + 2].position.y = std::sin(lat + kLatEvery);
-			vertexData[startIndex + 2].position.z = std::cos(lat + kLatEvery) * std::sin(lon);
+			vertexData[startIndex + 2].position.x = std::cos(lat) * std::cos(lon + kLonEvery);
+			vertexData[startIndex + 2].position.y = std::sin(lat);
+			vertexData[startIndex + 2].position.z = std::cos(lat) * std::sin(lon + kLonEvery);
 			vertexData[startIndex + 2].position.w = 1.0f;
 			vertexData[startIndex + 2].texcoord = { float(lonIndex) / float(kSubdivision),1.0f - float(latIndex + 1) /
 			float(kSubdivision) };
@@ -1010,11 +1010,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			vertexData[startIndex + 3] = vertexData[startIndex + 2];
 			vertexData[startIndex + 4] = vertexData[startIndex + 1];
 
-			vertexData[startIndex + 5].position.x = std::cos(lat + kLatEvery) * std::cos(lon);
+			vertexData[startIndex + 5].position.x = std::cos(lat + kLatEvery) * std::cos(lon + kLonEvery);
 			vertexData[startIndex + 5].position.y = std::sin(lat + kLatEvery);
-			vertexData[startIndex + 5].position.z = std::cos(lat + kLatEvery) * std::sin(lon);
+			vertexData[startIndex + 5].position.z = std::cos(lat + kLatEvery) * std::sin(lon + kLonEvery);
 			vertexData[startIndex + 5].position.w = 1.0f;
-			vertexData[startIndex + 5].texcoord = { float(lonIndex) / float(kSubdivision),1.0f - float(latIndex + 1) /
+			vertexData[startIndex + 5].texcoord = { float(lonIndex + 1) / float(kSubdivision),1.0f - float(latIndex + 1) /
 			float(kSubdivision) };
 
 		}
@@ -1221,10 +1221,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());//これをいれないと描画ができない
 		commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
 
-		transform.rotate.y += 0.03f;
-
 		//描画!(DrawCall/ドローコール)。3頂点で1つのインタランス。インタランスについては今後
 		commandList->DrawInstanced(kNumSphereVertices, 1, 0, 0);
+
+		transform.rotate.y += 0.03f;
 
 		//Spriteの描画。変更が必要なものだけ変更する
 		commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);//VBVを設定
