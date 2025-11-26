@@ -1231,7 +1231,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//TransformationMatrixCBufferの場所を設定
 		commandList->SetGraphicsRootConstantBufferView(1, transformtionMatrixResourceSprite->GetGPUVirtualAddress());
 		//描画! (DrawCall/ドローコール)
-		commandList->DrawInstanced(kNumSphereVertices, 1, 0, 0);
+		commandList->DrawInstanced(6, 1, 0, 0);
 
 		//実際のcommandListのImGuiの描画コマンドを積む
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
