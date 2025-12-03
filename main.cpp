@@ -19,6 +19,7 @@
 #include<fstream>
 #include<sstream>
 #include "externals/DirectXTex/d3dx12.h"
+#include<random>
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 
@@ -78,7 +79,37 @@ struct TransformationMatrix
 	Matrix4x4 World;
 };
 
+struct Particle
+{
+	Transform transform;
+	Vector3 velocity;
+	Vector4 color;
+};
 
+//代入演算子オーバーロード
+//Vector3の足算
+Vector3& operator +=(Vector3& lhy, const Vector3& rhy)
+{
+	lhy.x += rhy.x;
+	lhy.y += rhy.y;
+	lhy.z += rhy.z;
+	return lhy;
+}
+
+//Vector3の掛け算
+Vector3& operator*= (Vector3& v, float s)
+{
+	v.x *= s;
+	v.y *= s;
+	v.z *= s;
+	return v;
+}
+
+const Vector3 operator*(const Vector3& v, float s)
+{
+	Vector3 temp(v);
+	return temp *= s;
+}
 
 // 単位行列
 Matrix4x4 MakeIdentity4x4() {
@@ -318,6 +349,24 @@ std::string ConverString(const std::wstring& str)
 		(str.size()), result.data(), sizeNeeded, NULL, NULL);
 	return result;
 
+}
+
+std::random_device seedGenerator;
+std::mt19937 randomEngine(seedGenerator());
+
+
+Particle MakeNewParticle(std::mt19937& randomEngine)
+{
+	std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
+	Particle particle;
+	particle.transform.scale = { 1.0f,1.0f,1.0f };
+	particle.transform.rotate = { 0.0f,0.0f,0.0f };
+	particle.transform.translate = { distribution(randomEngine),distribution(randomEngine),distribution(randomEngine)};
+	particle.velocity = { distribution(randomEngine),distribution(randomEngine),distribution(randomEngine)};
+	std::uniform_real_distribution<float> distColor(0.0f, 1.0f);
+	particle.color = { distColor(randomEngine),distColor(randomEngine),distColor(randomEngine) };
+
+	return particle;
 }
 
 //Resource作成
@@ -1256,7 +1305,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
 	//Textureを読んで転送する
-	//DirectX::ScratchImage mipImages = LoadTexture("resources/uvChecker.png");
 	DirectX::ScratchImage mipImages = LoadTexture(modelData.material.textrueFilePath);
 	const DirectX::TexMetadata& metadata = mipImages.GetMetadata();
 	ID3D12Resource* textureResource = CreateTextureResource(device, metadata);
@@ -1358,7 +1406,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));//書き込むためのアドレスを取得
 	std::memcpy(vertexData, modelData.vertices.data(), sizeof(VertexData)* modelData.vertices.size());//頂点データをリソースにコピー
 
-	
+	Particle particles[kNumInstance];
+	for (uint32_t index = 0; index < kNumInstance; index++)
+	{
+		particles[index] = MakeNewParticle(randomEngine);	
+	}
+
+	bool useUpdate = false;
 
 	//ウィンドウのxボタンが押されるまでループ
 
@@ -1391,7 +1445,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::ColorEdit4("material", &materialData->x, ImGuiColorEditFlags_AlphaPreview);
 		ImGui::DragFloat("rotate.y", &transform.rotate.y, 0.1f);
 		ImGui::DragFloat3("transform", &transform.translate.x, 0.1f);
-		//ImGui::DragFloat2("transform", &transformSpri.translate.x, 1.0f);
 		ImGui::End();
 		
 		Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
@@ -1410,28 +1463,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 worldViewProjectionMatrixSprite = Multiply(worldMatrixSprite, Multiply(viewMatrixSprite, projectionMatrixSprite));
 		*transformationMatrixDataSPrite = worldViewProjectionMatrixSprite;
 
-		
-
-		Transform transforms[kNumInstance];
-		for (uint32_t index = 0; index < kNumInstance; index++)
-		{
-			transforms[index].scale = { 1.0f,1.0f,1.0f };
-			transforms[index].rotate = { 0.0f,0.0f,0.0f };
-			transforms[index].translate = { index * 0.1f,index * 0.1f,index * 0.1f };
-		}
+		ImGui::Checkbox("Update", &useUpdate);
 
 		for (uint32_t index = 0; index < kNumInstance; index++)
 		{
 			Matrix4x4 worldMatrix =
-				MakeAffineMatrix(transforms[index].scale, transforms[index].rotate, transforms[index].translate);
+				MakeAffineMatrix(particles[index].transform.scale, particles[index].transform.rotate, particles[index].transform.translate);
 			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, viewProjectionMatrix);
 			instancingData[index].WVP = worldViewProjectionMatrix;
 			instancingData[index].World = worldMatrix;
-
+			if (useUpdate)
+			{
+				const float kDeltaTime = 1.0f / 60.0f;
+				particles[index].transform.translate +=particles[index].velocity * kDeltaTime;
+			}
 		}
-		
-		//開発用UIの処理。実際に開発用のUIを出す場合はここをゲーム固有の処理に置き換える
-		//ImGui::ShowDemoWindow();
 
 		//ImGuiの内部コマンドを生成する
 		ImGui::Render();
@@ -1490,22 +1536,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		commandList->SetGraphicsRootDescriptorTable(1, instancingSrvHandleGPU);
 		//他の設定諸々
 		//描画!6頂点の板ポリゴンを、kNumInstance(今回は10)だけInstanceを描画を行う
-		commandList->DrawInstanced(UINT(modelData.vertices.size()), kNumInstance, 0, 0);
-
-		//transform.rotate.y += 0.03f;
-
-
-		////Spriteの描画。変更が必要なものだけ変更する
-		//commandList->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);//VBVを設定
-		////TransformationMatrixCBufferの場所を設定
-		//commandList->SetGraphicsRootConstantBufferView(1, transformtionMatrixResourceSprite->GetGPUVirtualAddress());
-		////インデックスを指定
-		//commandList->IASetIndexBuffer(&indexBufferViewSprite);//IBVを設定
-		//描画! (DrawCall/ドローコール)
-		//commandList->DrawInstanced(6, 1, 0, 0);
-		//描画! (DrawCall/ドローコール)6個のインデックスを使用し1つのインタランスを描画。その他は当面で良い
-	    //commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
-
+		if (kNumInstance > 0)
+		{
+			commandList->DrawInstanced(UINT(modelData.vertices.size()), kNumInstance, 0, 0);
+		}
 
 		//実際のcommandListのImGuiの描画コマンドを積む
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
