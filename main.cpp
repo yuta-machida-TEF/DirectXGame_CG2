@@ -1345,6 +1345,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	wvpResource->Release();
 	textureResource->Release();
+	textureResource2->Release();
 	depthStencilResource->Release();
 	dsvDescriptorHeap->Release();
 	srvDescriptorHeap->Release();
