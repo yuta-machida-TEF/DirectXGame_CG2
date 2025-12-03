@@ -55,9 +55,9 @@
   <ItemGroup>
     <FxCompile Include="Object3d.VS.hlsl" />
     <FxCompile Include="Object3d.PS.hlsl" />
+    <FxCompile Include="GeometryShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="HTMLPage2.html" />
     <None Include="Object3d.hlsli" />
   </ItemGroup>
   <ItemGroup>
