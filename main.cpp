@@ -1302,6 +1302,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	transformtionMatrixResourceSprite->Release();
 	vertexResourceSprite->Release();
 
+
 	wvpResource->Release();
 	textureResource->Release();
 	depthStencilResource->Release();
