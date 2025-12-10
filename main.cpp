@@ -77,6 +77,7 @@ struct DirectionalLight
 	float intensity;//輝度
 };
 
+
 Transform transform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
 // 単位行列
@@ -276,6 +277,29 @@ Matrix4x4 Inverse(const Matrix4x4& m) {
 		m.m[0][1] * m.m[1][0] * m.m[2][2] - m.m[0][0] * m.m[1][2] * m.m[2][1]) * recpDeterminant;
 
 	return result;
+}
+
+//内積
+float Dot(const Vector3& v1,const Vector3& v2)
+{
+	return v1.x * v2.x * v2.y + v1.z * v2.z;
+}
+
+//長さ
+float Length(const Vector3& v)
+{
+	return std::sqrt(Dot(v, v));
+}
+
+//正規化
+Vector3 Normalize(const Vector3& v)
+{
+	float length = Length(v);
+	if (length == 0.0f)
+	{
+		return v;
+	}
+	return{ v.x / length, v.y / length, v.z / length };
 }
 
 
@@ -839,14 +863,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;//SRVを使う
 	descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;//Offsetを自動計算
 
-	//ConstantBuffer < Material> : register(b0);
+	//ConstantBuffer<DirectionalLight>gDirectionalLight : register(b1);
 
 	//RootParameter作成。複数設定できるので配列。今回は結果1つだけなので長さの配列
 	D3D12_ROOT_PARAMETER rootParameters[3] = {};
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;//CBVを使う//b0のbと一致する
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;//PixelShaderで使う
 	rootParameters[0].Descriptor.ShaderRegister = 0;//レジスタ番号0とバインド//bというのはConstantBufferのこと
-	
+
 	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;//CBVを使う
 	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;//VertexShaderで使う
 	rootParameters[1].Descriptor.ShaderRegister = 0;//レジスタ番号を使う
@@ -976,7 +1000,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//どのように画面に色を打ち込むかの設定(気にしなくて良い)
 	graphicsPipelineStateDesc.SampleDesc.Count = 1;
 	graphicsPipelineStateDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
-	
+
 	//DepthStencilStateの設定
 	D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
 	//Depthの機能を有効化する
@@ -985,11 +1009,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 	//比較関数はLassEqual。つまり、近ければ描画される
 	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-	
+
 	//DepthStencilの設定
 	graphicsPipelineStateDesc.DepthStencilState = depthStencilDesc;
 	graphicsPipelineStateDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	
+
 	//実際に生成
 	ID3D12PipelineState* graphicsPipelineState = nullptr;
 	hr = device->CreateGraphicsPipelineState(&graphicsPipelineStateDesc,
@@ -1003,21 +1027,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	//Sprite用のマテリアルリソースを作る
 	ID3D12Resource* materialResourceSprite = CreateBufferResource(device, sizeof(Material));
-
-
-	//マテリアル用のリソースを作る。今回はcolor1つ分のサイズを用意する
-	ID3D12Resource* materialResource = CreateBufferResource(device, sizeof(Material));
-	//マテリアルにデータを書き込む
-	Material* materialData = nullptr;
+	//スプライトのマトリアルにデータを書き込み
+	Material* materialDataSprite = nullptr;
 	//書き込むためのアドレスを取得
-	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
-	////今回は赤を書き込んでみる
-	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
-	//マテリアルの内容
-	materialData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	materialData->enableLighting = true;
+	materialResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&materialDataSprite));
+	//色は白、ライトはなし
+	materialDataSprite->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	//materialDataSprite->enableLighting = true;
 	//Lightingを有効にする
-	materialData->enableLighting = false;
+	materialDataSprite->enableLighting = false;
 
 	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * kNumSphereVertices);
 
@@ -1197,11 +1215,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//Sprite用のTransformationMatrix用のリソースを作る。Matrix4x4 1つ分のサイズを用意する
 	ID3D12Resource* transformtionMatrixResourceSprite = CreateBufferResource(device, sizeof(Matrix4x4));
 	//データを書き込む
-	Matrix4x4* transformationMatrixDataSPrite = nullptr;
+	TransformationMatrix* transformationMatrixDataSPrite = nullptr;
 	//書き込むためのアドレスを取得
 	transformtionMatrixResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&transformationMatrixDataSPrite));
 	//単位行列を書き込んでおく
-	*transformationMatrixDataSPrite = MakeIdentity4x4();
+	transformationMatrixDataSPrite->WVP = MakeIdentity4x4();
+	transformationMatrixDataSPrite->World = MakeIdentity4x4();
 
 	Transform transformSprite({ 1.0f,1.0f,1.0f }, { 0.0f,0.0f,0.0f }, { 0.0f,0.0f,0.0f });
 
@@ -1245,12 +1264,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplWin32_NewFrame();
+		ImGui::DragFloat3("light", &directionalLightData->direction.x, 0.01f, -1.0f, 1.0f);
 		ImGui::NewFrame();
 
 		ImGui::Begin("Settings");
-		//ImGui::ColorEdit4("material", materialData, ImGuiColorEditFlags_AlphaPreview);
+		ImGui::ColorEdit4("material", &materialResourceSprite->color, ImGuiColorEditFlags_AlphaPreview);
 		ImGui::Checkbox("useMonsterBall", &useMonsterBall);
-		ImGui::ColorEdit4("transllateSprite",&materialData->color.x, ImGuiColorEditFlags_AlphaPreview);
+		ImGui::ColorEdit4("transllateSprite",&materialResourceSprite->color, ImGuiColorEditFlags_AlphaPreview);
 		ImGui::End();
 
 		
@@ -1269,6 +1289,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 worldViewProjectionMatrixSprite = Multiply(worldMatrixSprite, Multiply(viewMatrixSprite, projectionMatrixSprite));
 		*transformationMatrixDataSPrite = worldViewProjectionMatrixSprite;
 
+		//方向は正規化
+		directionalLightData->direction = Normalize(directionalLightData->direction);
 
 		//開発用UIの処理。実際に開発用のUIを出す場合はここをゲーム固有の処理に置き換える
 		//ImGui::ShowDemoWindow();
@@ -1323,6 +1345,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
 		commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());//これをいれないと描画ができない
 		commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
+		commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource->GetGPUVirtualAddress());
 
 		//描画!(DrawCall/ドローコール)。3頂点で1つのインタランス。インタランスについては今後
 		commandList->DrawInstanced(kNumSphereVertices, 1, 0, 0);
@@ -1402,7 +1425,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	roolSignatrue->Release();
 	pixelShaderBlob->Release();
 	vertexShaderBlob->Release();
-	materialResource->Release();
+	materialResourceSprite->Release();
 
 	transformtionMatrixResourceSprite->Release();
 	vertexResourceSprite->Release();
