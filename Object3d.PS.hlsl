@@ -3,8 +3,16 @@
 struct Material
 {
     float32_t4 color;
-    float32_t4 enableLighting;
+    int32_t enableLighting;
 };
+
+struct DirectionalLight
+{
+    float32_t4 color;
+    float32_t3 direction;
+    float intensity;
+};
+
 Texture2D<float32_t4> gTexture : register(t0);
 SamplerState gSampler : register(s0);
 ConstantBuffer<Material> gMaterial : register(b0);
@@ -15,12 +23,6 @@ struct PixelShaderOutput
     float32_t4 color : SV_TARGET0;
 };
 
-struct DirectionaLight
-{
-    float32_t4 color;
-    float32_t3 direction;
-    float intensity;
-};
 
 
 PixelShaderOutput main(VertexShaderOutput input)
