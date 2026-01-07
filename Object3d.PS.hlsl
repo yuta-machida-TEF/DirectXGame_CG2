@@ -8,6 +8,7 @@ struct Material
 Texture2D<float32_t4> gTexture : register(t0);
 SamplerState gSampler : register(s0);
 ConstantBuffer<Material> gMaterial : register(b0);
+ConstantBuffer<DirectionalLight> gDirectionalLight : register(b1);
 
 struct PixelShaderOutput
 {
@@ -21,8 +22,6 @@ struct DirectionaLight
     float intensity;
 };
 
-
-ConstantBuffer<DirectionalLight> gDirectionalLight : register(b1);
 
 PixelShaderOutput main(VertexShaderOutput input)
 {
