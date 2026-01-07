@@ -1328,6 +1328,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//指定した深度で画面全体をクリアする
 		commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
+
 		commandList->RSSetViewports(1, &viewport);//Viewportを設定
 		commandList->RSSetScissorRects(1, &scissorRect);//Scirssorを設定
 		//RootSignatrueを設定。PSPに設定しているけど別途設定が必要
